@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "BloodGlucoseReading_patientProfileId_glucoseUnit_measurementTyp" RENAME TO "BloodGlucoseReading_patientProfileId_glucoseUnit_measuremen_idx";

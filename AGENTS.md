@@ -1,0 +1,22 @@
+# HealthVault development guidance
+
+- Keep patient health data out of logs, fixtures, screenshots, and examples; use synthetic data only.
+- Enforce authorization at both role and patient-resource level. A family relationship alone grants no access.
+- Keep object storage private; issue short-lived authorized download URLs only.
+- Never put health data or direct personal identifiers in QR codes. QR payloads are random, short-lived references.
+- Do not implement real OTP delivery or claim regulatory compliance without explicit architecture, security, and legal review.
+- Use UTC timestamps, UUID identifiers, migrations, input validation, and audit events for sensitive access.
+- Keep shared contracts in packages; avoid copying DTOs across apps.
+- Maintain one responsive Next.js PWA, one NestJS API, and one PostgreSQL schema. Do not add native application workspaces.
+- Derive patient ownership from the authenticated session; never accept a client-supplied patient or user ID for profile access.
+- Do not cache authenticated responses or any patient profile or health information in a service worker or browser storage.
+- Medical documents must use private storage, authenticated owner-scoped API routes, signature/size validation, no-store delivery, and must never be cached by the service worker or persisted in browser storage.
+- Blood pressure and glucose readings are sensitive data: derive ownership from the authenticated patient session, validate dates and configurable broad input limits, store UTC timestamps, audit only event/account/IP metadata, and use no-store responses.
+- Keep glucose values in their original mg/dL or mmol/L unit; never combine incompatible units in charts without an explicit documented conversion. Do not diagnose, reassure, or recommend treatment from readings.
+- QR sharing references must contain only 256-bit opaque random tokens; persist only token hashes. A scan creates a request, never a grant. Every doctor read must re-check the patient-approved grant, expiry, revocation, verified doctor status, and exact selected category/document.
+- Doctor profile registration data is self-reported. Do not represent professional credentials as verified unless a trusted verification process checked them.
+- Keep QR tokens only in component memory; never put tokens in URLs, browser storage, logs, analytics, or service-worker caches. Sharing API responses must be private no-store.
+- Use synthetic medical test files only. The development scanner is explicitly no-op and must never be described as malware protection; production requires configured ClamAV and private S3-compatible storage.
+- Record sensitive access and profile changes without logging health request bodies.
+- Follow root scripts and update docs when changing architecture.
+- For document-storage changes, keep `docs/medical-document-design.md`, `docs/file-storage-design.md`, and `docs/upload-security.md` aligned with code and migrations.

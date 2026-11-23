@@ -1,0 +1,49 @@
+{
+  "name": "healthvault",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @healthvault/web",
+    "dev:api": "npm run start:dev -w @healthvault/api",
+    "build:web": "npm run build -w @healthvault/web",
+    "build:api": "npm run build -w @healthvault/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:status": "prisma migrate status",
+    "test": "npm run test --workspaces --if-present",
+    "test:web": "npm run test:e2e -w @healthvault/web"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "prettier": "^3.6.2",
+    "prisma": "^6.19.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1"
+  },
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10"
+  },
+  "allowScripts": {
+    "prisma@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "@prisma/client@6.19.3": true
+  },
+  "overrides": {
+    "multer": "2.5.0",
+    "@prisma/config": {
+      "deepmerge-ts": "^8.0.2"
+    }
+  }
+}

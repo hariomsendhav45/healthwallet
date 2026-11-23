@@ -1,0 +1,50 @@
+{
+  "name": "@healthvault/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/src/main.js",
+    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config ./test/jest-e2e.json --runInBand",
+    "test:e2e": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1163.0",
+    "@napi-rs/canvas": "^1.1.1",
+    "@nestjs/common": "^11.1.8",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.8",
+    "@nestjs/platform-express": "^11.1.8",
+    "@nestjs/swagger": "^11.2.1",
+    "@prisma/client": "^6.19.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "multer": "^2.5.0",
+    "openai": "^7.60.0",
+    "pdfjs-dist": "^6.5.438",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.10",
+    "@nestjs/schematics": "^11.0.8",
+    "@nestjs/testing": "^11.1.8",
+    "@types/express": "^5.0.5",
+    "@types/jest": "^29.5.14",
+    "@types/multer": "^2.3.0",
+    "@types/node": "^22.18.12",
+    "@types/supertest": "^7.2.1",
+    "jest": "^29.7.0",
+    "prisma": "^6.19.0",
+    "supertest": "^7.3.1",
+    "ts-jest": "^29.4.15",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.3"
+  }
+}

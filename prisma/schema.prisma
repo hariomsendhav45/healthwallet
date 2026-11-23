@@ -1,0 +1,878 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../apps/api/src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum DoctorVerificationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum OtpPurpose {
+  REGISTER
+  LOGIN
+  RECOVERY
+}
+
+enum AuthEventType {
+  OTP_REQUESTED
+  OTP_DELIVERY_FAILED
+  OTP_VERIFICATION_FAILED
+  OTP_VERIFIED
+  LOGIN_SUCCEEDED
+  LOGIN_FAILED
+  SESSION_REFRESHED
+  SESSION_REUSE_DETECTED
+  SESSION_REVOKED
+  ALL_SESSIONS_REVOKED
+  REGISTRATION_SUCCEEDED
+  REGISTRATION_FAILED
+  PATIENT_PROFILE_CREATED
+  PATIENT_PROFILE_UPDATED
+  PATIENT_HEALTH_INFORMATION_CREATED
+  PATIENT_HEALTH_INFORMATION_UPDATED
+  PATIENT_PROFILE_VIEWED
+  PATIENT_HEALTH_INFORMATION_VIEWED
+  MEDICAL_DOCUMENT_UPLOAD_INITIATED
+  MEDICAL_DOCUMENT_UPLOAD_COMPLETED
+  MEDICAL_DOCUMENT_UPLOAD_REJECTED
+  MEDICAL_DOCUMENT_VIEWED
+  MEDICAL_DOCUMENT_METADATA_UPDATED
+  MEDICAL_DOCUMENT_DELETED
+  MEDICAL_DOCUMENT_UNAUTHORIZED_ACCESS
+  MEDICAL_KNOWLEDGE_SOURCE_INGESTED
+  DEV_TEST_LOGIN_SUCCEEDED
+  DEV_TEST_LOGIN_FAILED
+  PATIENT_BP_READING_CREATED
+  PATIENT_BP_READING_UPDATED
+  PATIENT_BP_READING_DELETED
+  PATIENT_GLUCOSE_READING_CREATED
+  PATIENT_GLUCOSE_READING_UPDATED
+  PATIENT_GLUCOSE_READING_DELETED
+}
+
+enum MedicalDocumentCategory {
+  BLOOD_TEST
+  URINE_TEST
+  RADIOLOGY
+  X_RAY
+  MRI
+  CT_SCAN
+  ULTRASOUND
+  PRESCRIPTION
+  DISCHARGE_SUMMARY
+  CONSULTATION_REPORT
+  ECG
+  OTHER
+}
+
+enum MedicalDocumentStatus {
+  AVAILABLE
+  DELETING
+  DELETED
+  FAILED
+  REJECTED
+}
+
+enum MedicalDocumentScanStatus {
+  CLEAN
+  NOT_SCANNED
+}
+
+enum MedicalOcrStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum PatientGender {
+  FEMALE
+  MALE
+  NON_BINARY
+  PREFER_NOT_TO_SAY
+}
+
+enum BloodGroup {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+  UNKNOWN
+}
+
+enum DiabetesStatus {
+  UNKNOWN
+  YES
+  NO
+  PREDIABETES
+}
+
+enum HypertensionStatus {
+  UNKNOWN
+  YES
+  NO
+}
+
+enum GlucoseUnit {
+  MG_DL
+  MMOL_L
+}
+
+enum GlucoseMeasurementType {
+  FASTING
+  POST_MEAL
+  RANDOM
+  BEFORE_MEAL
+  AFTER_MEAL
+  BEDTIME
+  OTHER
+}
+
+enum MedicalShareStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum MedicalSharePermissionType {
+  PROFILE_BASIC
+  BLOOD_GROUP
+  HEALTH_INFORMATION
+  MEDICAL_DOCUMENTS
+  BLOOD_PRESSURE_READINGS
+  BLOOD_GLUCOSE_READINGS
+}
+
+enum DoctorAccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVOKED
+  EXPIRED
+}
+
+enum MedicalRecordAccessGrantStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum MedicalSharingEventType {
+  SHARE_SESSION_CREATED
+  SHARE_SESSION_REVOKED
+  SHARE_SESSION_EXPIRED
+  SHARE_TOKEN_VALIDATED
+  DOCTOR_ACCESS_REQUESTED
+  ACCESS_REQUEST_APPROVED
+  ACCESS_REQUEST_REJECTED
+  SHARED_RECORDS_VIEWED
+  SHARED_DOCUMENT_DOWNLOADED
+  ACCESS_GRANT_REVOKED
+  ACCESS_GRANT_EXPIRED
+  UNAUTHORIZED_ACCESS_ATTEMPTED
+}
+
+enum FamilyRelationshipType {
+  PARENT
+  SPOUSE
+  CHILD
+  SIBLING
+  OTHER
+}
+
+enum FamilyInvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  REVOKED
+  EXPIRED
+}
+
+enum FamilyAccessGrantStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum FamilyGuardianVerificationStatus {
+  UNVERIFIED
+}
+
+enum PatientReminderType {
+  APPOINTMENT
+  PATIENT_FOLLOW_UP
+  REPORT_REVIEW
+  MEASUREMENT
+}
+
+enum AiFeedbackRating {
+  HELPFUL
+  NOT_HELPFUL
+}
+
+enum AiFeedbackCategory {
+  INCORRECT_INFORMATION
+  MISSING_CONTEXT
+  REPORT_INTERPRETATION
+  LANGUAGE_QUALITY
+  OTHER
+}
+
+enum FamilyAuditEventType {
+  FAMILY_MEMBER_CREATED
+  FAMILY_MEMBER_UPDATED
+  FAMILY_MEMBER_REMOVED
+  FAMILY_INVITATION_CREATED
+  FAMILY_INVITATION_RESENT
+  FAMILY_INVITATION_REVOKED
+  FAMILY_INVITATION_ACCEPTED
+  FAMILY_INVITATION_REJECTED
+  FAMILY_INVITATION_EXPIRED
+  FAMILY_ACCESS_GRANTED
+  FAMILY_ACCESS_REVOKED
+  FAMILY_RECORDS_VIEWED
+  FAMILY_DOCUMENT_DOWNLOADED
+  FAMILY_UNAUTHORIZED_ACCESS_ATTEMPTED
+  FAMILY_GUARDIAN_CLAIM_CREATED
+}
+
+model User {
+  id                       String                     @id @default(uuid()) @db.Uuid
+  phoneNumber              String                     @unique @db.VarChar(16)
+  phoneVerified            Boolean                    @default(false)
+  isDevelopmentTestAccount Boolean                    @default(false)
+  role                     UserRole                   @default(PATIENT)
+  accountStatus            AccountStatus              @default(ACTIVE)
+  doctorVerificationStatus DoctorVerificationStatus?
+  createdAt                DateTime                   @default(now()) @db.Timestamptz(6)
+  updatedAt                DateTime                   @updatedAt @db.Timestamptz(6)
+  lastLoginAt              DateTime?                  @db.Timestamptz(6)
+  sessions                 RefreshSession[]
+  auditLogs                AuthAuditLog[]
+  patientProfile           PatientProfile?
+  uploadedMedicalDocuments MedicalDocument[]
+  doctorProfile            DoctorProfile?
+  doctorReviews            DoctorVerificationAudit[] @relation("DoctorVerificationReviewer")
+  doctorDocumentViews      DoctorVerificationDocumentAccessLog[]
+  createdShareSessions     MedicalShareSession[]      @relation("ShareSessionCreator")
+  doctorAccessRequests     DoctorAccessRequest[]      @relation("AccessRequestDoctor")
+  reviewedAccessRequests   DoctorAccessRequest[]      @relation("AccessRequestReviewer")
+  accessGrantsAsDoctor     MedicalRecordAccessGrant[] @relation("AccessGrantDoctor")
+  createdAccessGrants      MedicalRecordAccessGrant[] @relation("AccessGrantCreator")
+  revokedAccessGrants      MedicalRecordAccessGrant[] @relation("AccessGrantRevoker")
+  sharingAuditEvents       MedicalSharingAuditLog[]   @relation("SharingAuditActor")
+  doctorSharingAuditEvents MedicalSharingAuditLog[]   @relation("SharingAuditDoctor")
+  claimedFamilyMembers    FamilyMember[]               @relation("FamilyMemberClaimedUser")
+  acceptedFamilyInvites   FamilyInvitation[]           @relation("FamilyInvitationAccepter")
+  familyAccessRecipients  FamilyAccessGrant[]          @relation("FamilyAccessRecipient")
+  familyAuditEvents       FamilyAuditLog[]             @relation("FamilyAuditActor")
+  familyAuditTargets      FamilyAuditLog[]             @relation("FamilyAuditTarget")
+  guardianClaims          FamilyGuardianRelationship[] @relation("FamilyGuardianClaimant")
+  aiProcessingConsent     AiProcessingConsent?
+  reviewedOcrResults      MedicalDocumentOcrResult[]
+  importedMedicalKnowledge MedicalKnowledgeSource[]
+  patientReminders         PatientReminder[]
+  aiResponseFeedback       AiResponseFeedback[]
+  aiResponseReceipts       AiResponseReceipt[]
+
+  @@index([role, accountStatus])
+}
+
+model PatientProfile {
+  id                    String                     @id @default(uuid()) @db.Uuid
+  userId                String                     @unique @db.Uuid
+  fullName              String?                    @db.VarChar(120)
+  dateOfBirth           DateTime?                  @db.Date
+  gender                PatientGender?
+  bloodGroup            BloodGroup?
+  profilePhotoKey       String?                    @db.VarChar(512)
+  addressLine1          String?                    @db.VarChar(200)
+  addressLine2          String?                    @db.VarChar(200)
+  city                  String?                    @db.VarChar(100)
+  state                 String?                    @db.VarChar(100)
+  postalCode            String?                    @db.VarChar(6)
+  country               String                     @default("India") @db.VarChar(100)
+  emergencyContactName  String?                    @db.VarChar(120)
+  emergencyContactPhone String?                    @db.VarChar(16)
+  createdAt             DateTime                   @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime                   @updatedAt @db.Timestamptz(6)
+  user                  User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  healthInformation     PatientHealthInformation?
+  medicalDocuments      MedicalDocument[]
+  ocrResults            MedicalDocumentOcrResult[]
+  bloodPressureReadings BloodPressureReading[]
+  bloodGlucoseReadings  BloodGlucoseReading[]
+  medicalShareSessions  MedicalShareSession[]
+  doctorAccessRequests  DoctorAccessRequest[]
+  medicalAccessGrants   MedicalRecordAccessGrant[]
+  sharingAuditEvents    MedicalSharingAuditLog[]
+  familyMembers         FamilyMember[]               @relation("FamilyMemberOwnerProfile")
+  familyAccessGrants    FamilyAccessGrant[]          @relation("FamilyAccessPatient")
+  guardianRelationships FamilyGuardianRelationship[] @relation("GuardianRepresentedPatient")
+
+  @@unique([id, userId])
+
+
+  @@index([updatedAt])
+}
+
+// A relationship record is owned by the patient who created it. It never grants
+// record access. A member is linked only after claiming an invitation with their
+// own verified account.
+model FamilyMember {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  ownerPatientProfileId String                 @db.Uuid
+  ownerUserId           String                 @db.Uuid
+  claimedByUserId       String?                @db.Uuid
+  fullName              String                 @db.VarChar(120)
+  dateOfBirth           DateTime?              @db.Date
+  relationship          FamilyRelationshipType
+  contactNumber         String?                @db.VarChar(16)
+  gender                PatientGender?
+  createdAt             DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime               @updatedAt @db.Timestamptz(6)
+  ownerPatientProfile   PatientProfile         @relation("FamilyMemberOwnerProfile", fields: [ownerPatientProfileId, ownerUserId], references: [id, userId], onDelete: Cascade)
+  claimedBy             User?                  @relation("FamilyMemberClaimedUser", fields: [claimedByUserId], references: [id], onDelete: SetNull)
+  invitations           FamilyInvitation[]    @relation("FamilyInvitationMemberOwner")
+  grants                FamilyAccessGrant[]
+  guardianRelationship  FamilyGuardianRelationship?
+  auditEvents           FamilyAuditLog[]
+
+  @@unique([id, claimedByUserId])
+  @@unique([id, ownerUserId])
+  @@unique([ownerPatientProfileId, contactNumber])
+  @@index([ownerPatientProfileId, createdAt])
+  @@index([claimedByUserId])
+}
+
+model FamilyInvitation {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  familyMemberId        String                 @db.Uuid
+  senderUserId          String                 @db.Uuid
+  acceptedByUserId      String?                @db.Uuid
+  targetPhoneNumber     String                 @db.VarChar(16)
+  tokenHash             String                 @unique @db.Char(64)
+  status                FamilyInvitationStatus @default(PENDING)
+  expiresAt             DateTime               @db.Timestamptz(6)
+  createdAt             DateTime               @default(now()) @db.Timestamptz(6)
+  acceptedAt            DateTime?              @db.Timestamptz(6)
+  rejectedAt            DateTime?              @db.Timestamptz(6)
+  familyMember          FamilyMember           @relation("FamilyInvitationMemberOwner", fields: [familyMemberId, senderUserId], references: [id, ownerUserId], onDelete: Cascade)
+  acceptedBy            User?                  @relation("FamilyInvitationAccepter", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([familyMemberId, status, createdAt(sort: Desc)])
+  @@index([targetPhoneNumber, status, expiresAt])
+}
+
+// The record owner is always the grantor. Family permissions reuse Phase 5's
+// permission vocabulary; selected documents remain individually scoped.
+model FamilyAccessGrant {
+  id               String                  @id @default(uuid()) @db.Uuid
+  familyMemberId   String                  @db.Uuid
+  patientProfileId String                  @db.Uuid
+  recipientUserId  String                  @db.Uuid
+  grantedByUserId  String                  @db.Uuid
+  status           FamilyAccessGrantStatus @default(ACTIVE)
+  grantedAt        DateTime                @default(now()) @db.Timestamptz(6)
+  expiresAt        DateTime                @db.Timestamptz(6)
+  revokedAt        DateTime?               @db.Timestamptz(6)
+  familyMember     FamilyMember            @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+  patientProfile   PatientProfile          @relation("FamilyAccessPatient", fields: [patientProfileId, grantedByUserId], references: [id, userId], onDelete: Cascade)
+  recipient        User                    @relation("FamilyAccessRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+  permissions      FamilyAccessPermission[]
+  documents        FamilyAccessDocument[]
+  auditEvents      FamilyAuditLog[]
+
+  @@index([familyMemberId, status, expiresAt])
+  @@index([patientProfileId, status, expiresAt])
+  @@index([recipientUserId, status, expiresAt])
+}
+
+model FamilyAccessPermission {
+  id             String                    @id @default(uuid()) @db.Uuid
+  grantId        String                    @db.Uuid
+  permissionType MedicalSharePermissionType
+  createdAt      DateTime                  @default(now()) @db.Timestamptz(6)
+  grant          FamilyAccessGrant         @relation(fields: [grantId], references: [id], onDelete: Cascade)
+
+  @@unique([grantId, permissionType])
+  @@index([permissionType, grantId])
+}
+
+model FamilyAccessDocument {
+  id                String              @id @default(uuid()) @db.Uuid
+  grantId           String              @db.Uuid
+  medicalDocumentId String              @db.Uuid
+  createdAt         DateTime            @default(now()) @db.Timestamptz(6)
+  grant             FamilyAccessGrant  @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  medicalDocument   MedicalDocument    @relation(fields: [medicalDocumentId], references: [id], onDelete: Cascade)
+
+  @@unique([grantId, medicalDocumentId])
+  @@index([medicalDocumentId])
+}
+
+// Legal authority is recorded separately from ordinary family relationships.
+// No verification process exists in this phase, so this status cannot be changed
+// through the API and never authorizes record access.
+model FamilyGuardianRelationship {
+  id                       String                          @id @default(uuid()) @db.Uuid
+  familyMemberId           String                          @unique @db.Uuid
+  guardianUserId           String                          @db.Uuid
+  representedPatientProfileId String                       @db.Uuid
+  verificationStatus       FamilyGuardianVerificationStatus @default(UNVERIFIED)
+  createdAt                DateTime                        @default(now()) @db.Timestamptz(6)
+  familyMember             FamilyMember                    @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+  guardian                 User                            @relation("FamilyGuardianClaimant", fields: [guardianUserId], references: [id], onDelete: Cascade)
+  representedPatient       PatientProfile                  @relation("GuardianRepresentedPatient", fields: [representedPatientProfileId], references: [id], onDelete: Cascade)
+
+  @@index([guardianUserId, verificationStatus])
+}
+
+model FamilyAuditLog {
+  id              String               @id @default(uuid()) @db.Uuid
+  familyMemberId  String?              @db.Uuid
+  actorUserId     String?              @db.Uuid
+  targetUserId    String?              @db.Uuid
+  grantId         String?              @db.Uuid
+  eventType       FamilyAuditEventType
+  ipAddress       String?              @db.VarChar(64)
+  createdAt       DateTime             @default(now()) @db.Timestamptz(6)
+  familyMember    FamilyMember?        @relation(fields: [familyMemberId], references: [id], onDelete: SetNull)
+  actor           User?                @relation("FamilyAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  target          User?                @relation("FamilyAuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  grant           FamilyAccessGrant?   @relation(fields: [grantId], references: [id], onDelete: SetNull)
+
+  @@index([familyMemberId, createdAt(sort: Desc)])
+  @@index([actorUserId, createdAt(sort: Desc)])
+  @@index([targetUserId, createdAt(sort: Desc)])
+  @@index([eventType, createdAt(sort: Desc)])
+}
+
+// The registration details are doctor-entered. They are not considered verified unless
+// User.doctorVerificationStatus is explicitly set by a trusted verification process.
+model DoctorProfile {
+  id                         String   @id @default(uuid()) @db.Uuid
+  userId                     String   @unique @db.Uuid
+  fullName                   String?  @db.VarChar(120)
+  professionalRegistrationNo String?  @db.VarChar(120)
+  registrationAuthority      String?  @db.VarChar(160)
+  email                      String?  @db.VarChar(254)
+  qualification              String?  @db.VarChar(160)
+  specialization             String?  @db.VarChar(160)
+  clinicName                 String?  @db.VarChar(180)
+  clinicAddress              String?  @db.VarChar(500)
+  createdAt                  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt                  DateTime @updatedAt @db.Timestamptz(6)
+  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents                  DoctorVerificationDocument[]
+  audit                      DoctorVerificationAudit[]
+}
+
+model DoctorVerificationDocument {
+  id                String       @id @default(uuid()) @db.Uuid
+  doctorProfileId   String       @db.Uuid
+  originalFileName  String       @db.VarChar(255)
+  storageKey        String       @unique @db.VarChar(64)
+  mimeType          String       @db.VarChar(64)
+  fileSize          Int
+  fileChecksum      String       @db.Char(64)
+  scanStatus        MedicalDocumentScanStatus
+  createdAt         DateTime     @default(now()) @db.Timestamptz(6)
+  doctorProfile     DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  accessLogs        DoctorVerificationDocumentAccessLog[]
+  @@index([doctorProfileId, createdAt(sort: Desc)])
+}
+
+model DoctorVerificationAudit {
+  id                String                  @id @default(uuid()) @db.Uuid
+  doctorProfileId   String                  @db.Uuid
+  reviewerUserId    String                  @db.Uuid
+  fromStatus        DoctorVerificationStatus
+  toStatus          DoctorVerificationStatus
+  reason            String                  @db.VarChar(1000)
+  createdAt         DateTime                @default(now()) @db.Timestamptz(6)
+  doctorProfile     DoctorProfile           @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  reviewer          User                    @relation("DoctorVerificationReviewer", fields: [reviewerUserId], references: [id], onDelete: Restrict)
+  @@index([doctorProfileId, createdAt(sort: Desc)])
+  @@index([reviewerUserId, createdAt(sort: Desc)])
+}
+
+model DoctorVerificationDocumentAccessLog {
+  id          String                     @id @default(uuid()) @db.Uuid
+  documentId  String                     @db.Uuid
+  actorUserId String                     @db.Uuid
+  accessedAt  DateTime                   @default(now()) @db.Timestamptz(6)
+  document    DoctorVerificationDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  actor       User                       @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  @@index([documentId, accessedAt(sort: Desc)])
+  @@index([actorUserId, accessedAt(sort: Desc)])
+}
+
+model MedicalShareSession {
+  id               String                     @id @default(uuid()) @db.Uuid
+  patientProfileId String                     @db.Uuid
+  tokenHash        String                     @unique @db.Char(64)
+  status           MedicalShareStatus         @default(ACTIVE)
+  expiresAt        DateTime                   @db.Timestamptz(6)
+  createdAt        DateTime                   @default(now()) @db.Timestamptz(6)
+  revokedAt        DateTime?                  @db.Timestamptz(6)
+  createdByUserId  String                     @db.Uuid
+  maxUses          Int                        @default(5)
+  useCount         Int                        @default(0)
+  patientProfile   PatientProfile             @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  createdBy        User                       @relation("ShareSessionCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  permissions      MedicalSharePermission[]
+  documents        MedicalShareDocument[]
+  accessRequests   DoctorAccessRequest[]
+  accessGrants     MedicalRecordAccessGrant[]
+  auditEvents      MedicalSharingAuditLog[]
+
+  @@index([patientProfileId, status, expiresAt])
+  @@index([expiresAt, status])
+}
+
+model MedicalSharePermission {
+  id             String                     @id @default(uuid()) @db.Uuid
+  shareSessionId String                     @db.Uuid
+  permissionType MedicalSharePermissionType
+  createdAt      DateTime                   @default(now()) @db.Timestamptz(6)
+  shareSession   MedicalShareSession        @relation(fields: [shareSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([shareSessionId, permissionType])
+  @@index([permissionType, shareSessionId])
+}
+
+model MedicalShareDocument {
+  id                String              @id @default(uuid()) @db.Uuid
+  shareSessionId    String              @db.Uuid
+  medicalDocumentId String              @db.Uuid
+  createdAt         DateTime            @default(now()) @db.Timestamptz(6)
+  shareSession      MedicalShareSession @relation(fields: [shareSessionId], references: [id], onDelete: Cascade)
+  medicalDocument   MedicalDocument     @relation(fields: [medicalDocumentId], references: [id], onDelete: Cascade)
+
+  @@unique([shareSessionId, medicalDocumentId])
+  @@index([medicalDocumentId])
+}
+
+model DoctorAccessRequest {
+  id               String                    @id @default(uuid()) @db.Uuid
+  shareSessionId   String                    @db.Uuid
+  patientProfileId String                    @db.Uuid
+  doctorUserId     String                    @db.Uuid
+  status           DoctorAccessRequestStatus @default(PENDING)
+  requestedAt      DateTime                  @default(now()) @db.Timestamptz(6)
+  reviewedAt       DateTime?                 @db.Timestamptz(6)
+  reviewedByUserId String?                   @db.Uuid
+  expiresAt        DateTime                  @db.Timestamptz(6)
+  shareSession     MedicalShareSession       @relation(fields: [shareSessionId], references: [id], onDelete: Cascade)
+  patientProfile   PatientProfile            @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  doctor           User                      @relation("AccessRequestDoctor", fields: [doctorUserId], references: [id], onDelete: Cascade)
+  reviewedBy       User?                     @relation("AccessRequestReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  accessGrant      MedicalRecordAccessGrant?
+
+  @@unique([shareSessionId, doctorUserId])
+  @@index([patientProfileId, status, requestedAt(sort: Desc)])
+  @@index([doctorUserId, status, requestedAt(sort: Desc)])
+  @@index([expiresAt, status])
+}
+
+model MedicalRecordAccessGrant {
+  id               String                         @id @default(uuid()) @db.Uuid
+  patientProfileId String                         @db.Uuid
+  doctorUserId     String                         @db.Uuid
+  shareSessionId   String                         @db.Uuid
+  accessRequestId  String                         @unique @db.Uuid
+  grantedByUserId  String                         @db.Uuid
+  status           MedicalRecordAccessGrantStatus @default(ACTIVE)
+  grantedAt        DateTime                       @default(now()) @db.Timestamptz(6)
+  expiresAt        DateTime                       @db.Timestamptz(6)
+  revokedAt        DateTime?                      @db.Timestamptz(6)
+  revokedByUserId  String?                        @db.Uuid
+  patientProfile   PatientProfile                 @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  doctor           User                           @relation("AccessGrantDoctor", fields: [doctorUserId], references: [id], onDelete: Cascade)
+  shareSession     MedicalShareSession            @relation(fields: [shareSessionId], references: [id], onDelete: Cascade)
+  accessRequest    DoctorAccessRequest            @relation(fields: [accessRequestId], references: [id], onDelete: Cascade)
+  grantedBy        User                           @relation("AccessGrantCreator", fields: [grantedByUserId], references: [id], onDelete: Cascade)
+  revokedBy        User?                          @relation("AccessGrantRevoker", fields: [revokedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([patientProfileId, status, expiresAt])
+  @@index([doctorUserId, status, expiresAt])
+  @@index([shareSessionId, status])
+}
+
+model MedicalSharingAuditLog {
+  id               String                  @id @default(uuid()) @db.Uuid
+  patientProfileId String?                 @db.Uuid
+  doctorUserId     String?                 @db.Uuid
+  actorUserId      String?                 @db.Uuid
+  shareSessionId   String?                 @db.Uuid
+  eventType        MedicalSharingEventType
+  ipAddress        String?                 @db.VarChar(64)
+  metadata         Json?
+  createdAt        DateTime                @default(now()) @db.Timestamptz(6)
+  patientProfile   PatientProfile?         @relation(fields: [patientProfileId], references: [id], onDelete: SetNull)
+  doctor           User?                   @relation("SharingAuditDoctor", fields: [doctorUserId], references: [id], onDelete: SetNull)
+  actor            User?                   @relation("SharingAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  shareSession     MedicalShareSession?    @relation(fields: [shareSessionId], references: [id], onDelete: SetNull)
+
+  @@index([patientProfileId, createdAt(sort: Desc)])
+  @@index([doctorUserId, createdAt(sort: Desc)])
+  @@index([eventType, createdAt(sort: Desc)])
+}
+
+model BloodPressureReading {
+  id               String         @id @default(uuid()) @db.Uuid
+  patientProfileId String         @db.Uuid
+  systolic         Int
+  diastolic        Int
+  heartRate        Int?
+  measuredAt       DateTime       @db.Timestamptz(6)
+  notes            String?        @db.VarChar(1000)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(6)
+  deletedAt        DateTime?      @db.Timestamptz(6)
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  @@index([patientProfileId, deletedAt, measuredAt(sort: Desc)])
+}
+
+model BloodGlucoseReading {
+  id               String                 @id @default(uuid()) @db.Uuid
+  patientProfileId String                 @db.Uuid
+  glucoseValue     Decimal                @db.Decimal(7, 2)
+  glucoseUnit      GlucoseUnit
+  measurementType  GlucoseMeasurementType
+  measuredAt       DateTime               @db.Timestamptz(6)
+  notes            String?                @db.VarChar(1000)
+  createdAt        DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime               @updatedAt @db.Timestamptz(6)
+  deletedAt        DateTime?              @db.Timestamptz(6)
+  patientProfile   PatientProfile         @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  @@index([patientProfileId, deletedAt, measuredAt(sort: Desc)])
+  @@index([patientProfileId, glucoseUnit, measurementType, measuredAt(sort: Desc)])
+}
+
+model PatientHealthInformation {
+  id                        String             @id @default(uuid()) @db.Uuid
+  patientProfileId          String             @unique @db.Uuid
+  diabetesStatus            DiabetesStatus     @default(UNKNOWN)
+  hypertensionStatus        HypertensionStatus @default(UNKNOWN)
+  allergies                 String?            @db.Text
+  existingMedicalConditions String?            @db.Text
+  currentMedications        String?            @db.Text
+  additionalNotes           String?            @db.Text
+  createdAt                 DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt                 DateTime           @updatedAt @db.Timestamptz(6)
+  patientProfile            PatientProfile     @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  @@index([updatedAt])
+}
+
+model MedicalDocument {
+  id               String                    @id @default(uuid()) @db.Uuid
+  patientProfileId String                    @db.Uuid
+  uploadedByUserId String                    @db.Uuid
+  title            String                    @db.VarChar(180)
+  description      String?                   @db.VarChar(2000)
+  category         MedicalDocumentCategory
+  documentDate     DateTime?                 @db.Date
+  originalFileName String                    @db.VarChar(255)
+  storageKey       String                    @unique @db.VarChar(512)
+  mimeType         String                    @db.VarChar(64)
+  fileSize         Int
+  fileChecksum     String                    @db.Char(64)
+  uploadStatus     MedicalDocumentStatus     @default(AVAILABLE)
+  scanStatus       MedicalDocumentScanStatus @default(NOT_SCANNED)
+  createdAt        DateTime                  @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime                  @updatedAt @db.Timestamptz(6)
+  deletedAt        DateTime?                 @db.Timestamptz(6)
+  patientProfile   PatientProfile            @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  uploadedBy       User                      @relation(fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+  sharedBySessions MedicalShareDocument[]
+  sharedByFamilyGrants FamilyAccessDocument[]
+  ocrResult        MedicalDocumentOcrResult?
+
+  @@index([patientProfileId, deletedAt, createdAt])
+  @@index([patientProfileId, category, documentDate])
+  @@index([uploadedByUserId, createdAt])
+}
+
+model MedicalDocumentOcrResult {
+  documentId          String           @id @db.Uuid
+  patientProfileId    String           @db.Uuid
+  status              MedicalOcrStatus @default(PENDING)
+  extractedText       String?          @db.Text
+  extractedFields     Json?
+  extractedMetadata   Json?
+  reviewedText        String?          @db.Text
+  reviewedFields      Json?
+  reviewedMetadata    Json?
+  reviewedAt          DateTime?        @db.Timestamptz(6)
+  reviewedByUserId    String?          @db.Uuid
+  failureCode         String?          @db.VarChar(64)
+  attemptCount        Int              @default(0)
+  processedAt         DateTime?        @db.Timestamptz(6)
+  createdAt           DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime         @updatedAt @db.Timestamptz(6)
+  document            MedicalDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  patientProfile      PatientProfile   @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  reviewedBy          User?            @relation(fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([patientProfileId, status, updatedAt])
+}
+
+model OtpChallenge {
+  id            String     @id @default(uuid()) @db.Uuid
+  phoneNumber   String     @db.VarChar(16)
+  otpHash       String     @db.Char(64)
+  purpose       OtpPurpose
+  requestedRole UserRole?
+  expiresAt     DateTime   @db.Timestamptz(6)
+  attempts      Int        @default(0)
+  maxAttempts   Int
+  consumedAt    DateTime?  @db.Timestamptz(6)
+  createdAt     DateTime   @default(now()) @db.Timestamptz(6)
+
+  @@index([phoneNumber, purpose, createdAt])
+  @@index([expiresAt, consumedAt])
+}
+
+model RefreshSession {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  tokenHash  String    @unique @db.Char(64)
+  deviceId   String?   @db.VarChar(128)
+  deviceName String?   @db.VarChar(128)
+  platform   String?   @db.VarChar(16)
+  expiresAt  DateTime  @db.Timestamptz(6)
+  revokedAt  DateTime? @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  lastUsedAt DateTime  @default(now()) @db.Timestamptz(6)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt, expiresAt])
+}
+
+model AuthAuditLog {
+  id                String        @id @default(uuid()) @db.Uuid
+  userId            String?       @db.Uuid
+  eventType         AuthEventType
+  ipAddress         String?       @db.VarChar(64)
+  deviceInformation String?       @db.VarChar(256)
+  createdAt         DateTime      @default(now()) @db.Timestamptz(6)
+  user              User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+}
+
+model AiProcessingConsent {
+  userId      String    @id @db.Uuid
+  grantedAt   DateTime? @db.Timestamptz(6)
+  withdrawnAt DateTime? @db.Timestamptz(6)
+  policyVersion String  @db.VarChar(32)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([grantedAt, withdrawnAt])
+}
+
+model PatientReminder {
+  id          String              @id @default(uuid()) @db.Uuid
+  userId      String              @db.Uuid
+  title       String              @db.VarChar(140)
+  type        PatientReminderType
+  dueAt       DateTime            @db.Timestamptz(6)
+  completedAt DateTime?           @db.Timestamptz(6)
+  disabledAt  DateTime?           @db.Timestamptz(6)
+  createdAt   DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime            @updatedAt @db.Timestamptz(6)
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, disabledAt, completedAt, dueAt])
+}
+
+model AiResponseFeedback {
+  id        String             @id @default(uuid()) @db.Uuid
+  userId    String             @db.Uuid
+  responseId String            @db.Uuid
+  rating    AiFeedbackRating
+  category  AiFeedbackCategory?
+  createdAt DateTime           @default(now()) @db.Timestamptz(6)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  response  AiResponseReceipt  @relation(fields: [userId, responseId], references: [userId, responseId], onDelete: Cascade)
+
+  @@unique([userId, responseId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model AiResponseReceipt {
+  id         String             @id @default(uuid()) @db.Uuid
+  userId     String             @db.Uuid
+  responseId String             @unique @db.Uuid
+  expiresAt  DateTime           @db.Timestamptz(6)
+  createdAt  DateTime           @default(now()) @db.Timestamptz(6)
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedback   AiResponseFeedback?
+
+  @@unique([userId, responseId])
+  @@index([expiresAt])
+}
+
+model MedicalKnowledgeSource {
+  id             String                  @id @default(uuid()) @db.Uuid
+  title          String                  @db.VarChar(240)
+  sourceName     String                  @db.VarChar(160)
+  sourceUrl      String                  @db.VarChar(1000)
+  license        String                  @db.VarChar(500)
+  version        String                  @db.VarChar(80)
+  embeddingModel String                  @default("text-embedding-3-small") @db.VarChar(80)
+  contentHash    String                  @db.Char(64)
+  active         Boolean                 @default(true)
+  importedById   String                  @db.Uuid
+  createdAt      DateTime                @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime                @updatedAt @db.Timestamptz(6)
+  importedBy     User                    @relation(fields: [importedById], references: [id], onDelete: Restrict)
+  chunks         MedicalKnowledgeChunk[]
+
+  @@unique([sourceUrl, version])
+  @@index([active, sourceName])
+}
+
+model MedicalKnowledgeChunk {
+  id        String               @id @default(uuid()) @db.Uuid
+  sourceId  String               @db.Uuid
+  ordinal   Int
+  content   String               @db.Text
+  embedding Json
+  createdAt DateTime             @default(now()) @db.Timestamptz(6)
+  source    MedicalKnowledgeSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, ordinal])
+  @@index([sourceId, ordinal])
+}
