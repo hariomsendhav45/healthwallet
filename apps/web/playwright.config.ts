@@ -6,9 +6,9 @@ export default defineConfig({
   reporter: 'list',
   use: { baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000', ...devices['Desktop Chrome'] },
   webServer: {
-    command: 'npm run start -- --hostname 127.0.0.1 --port 3000',
-    url: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
+    command: 'npm run dev',
+    url:'http://localhost:3000',
     reuseExistingServer: true,
-    timeout: 60_000,
+    timeout: 120000,
   },
 });
